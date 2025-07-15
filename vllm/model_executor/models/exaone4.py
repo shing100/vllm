@@ -249,14 +249,15 @@ class Exaone4Model(nn.Module):
         )
 
         # create layers
-        self.layers = make_layers(
-            Exaone4DecoderLayer,
-            cfg.num_hidden_layers,
-            cfg,                               # positional arg 1
-            vllm_config.cache_config,          # arg 2
-            quant,                             # arg 3
-            prefix=f"{prefix}.layers",         # required positional `prefix`
-        )
+        self.layers = nn.ModuleList([
+            Exaone4DecoderLayer(
+                cfg,
+                cache_config=vllm_config.cache_config,
+                quant_config=quant,
+                prefix=f"{prefix}.layers.{i}",
+            )
+            for i in range(cfg.num_hidden_layers)
+        ])
         self.final_ln = RMSNorm(cfg.hidden_size, eps=cfg.rms_norm_eps)
 
         # util for PP
