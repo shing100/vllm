@@ -42,9 +42,9 @@ class Exaone4Attention(nn.Module):
         hidden_size: int,
         num_heads: int,
         num_kv_heads: int,
-        max_position: int = 32768,  # EXAONE4 context 길이
+        max_position: int = 65536,  # EXAONE4 context 길이
         head_dim: Optional[int] = None,
-        rms_norm_eps: float = 1e-6,
+        rms_norm_eps: float = 1e-05,
         qkv_bias: bool = False,
         rope_theta: float = 10000.0,
         cache_config: Optional[CacheConfig] = None,
@@ -174,6 +174,7 @@ class Exaone4DecoderLayer(nn.Module):
         )
         self.input_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.post_feedforward_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
     def forward(
         self,
@@ -194,6 +195,7 @@ class Exaone4DecoderLayer(nn.Module):
         # Fully Connected
         hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
         hidden_states = self.mlp(hidden_states)
+        hidden_states, residual = self.post_feedforward_layernorm(hidden_states, residual)
         return hidden_states, residual
 
 
