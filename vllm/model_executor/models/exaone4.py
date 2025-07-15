@@ -50,7 +50,9 @@ class Exaone4MLP(nn.Module):
         self.act_fn = torch.nn.functional.silu if config.hidden_act == "silu" else torch.nn.functional.gelu
 
     def forward(self, x):
-        return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+        gate = self.gate_proj(x)[0]
+        up = self.up_proj(x)[0]
+        return self.down_proj(self.act_fn(gate) * up)[0]
 
 
 class Exaone4Attention(nn.Module):
