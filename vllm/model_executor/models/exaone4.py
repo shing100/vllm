@@ -60,12 +60,19 @@ class Exaone4MLP(nn.Module):
         prefix: str = "",
     ) -> None:
         super().__init__()
-        self.gate_up_proj = RowParallelLinear(
+        self.gate_proj = RowParallelLinear(
             hidden_size,
-            2 * intermediate_size,
+            intermediate_size,
             bias=False,
             quant_config=quant_config,
-            prefix=f"{prefix}.gate_up_proj",
+            prefix=f"{prefix}.gate_proj",
+        )
+        self.up_proj = RowParallelLinear(
+            hidden_size,
+            intermediate_size,
+            bias=False,
+            quant_config=quant_config,
+            prefix=f"{prefix}.up_proj",
         )
         self.down_proj = RowParallelLinear(
             intermediate_size,
@@ -78,8 +85,8 @@ class Exaone4MLP(nn.Module):
         self.act_fn = torch.nn.SiLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        gate_up, _ = self.gate_up_proj(x)
-        gate, up = gate_up.chunk(2, dim=-1)
+        gate, _ = self.gate_proj(x)
+        up, _ = self.up_proj(x)
         x = self.act_fn(gate) * up
         x, _ = self.down_proj(x)
         return x
@@ -292,7 +299,6 @@ class Exaone4ForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
 
     packed_modules_mapping = {
         "qkv_proj": ["q_proj", "k_proj", "v_proj"],
-        "gate_up_proj": ["gate_proj", "up_proj"],
     }
 
     def __init__(self, *, vllm_config: VllmConfig, prefix: str = "") -> None:
