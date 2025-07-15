@@ -38,7 +38,6 @@ from .adapters import as_seq_cls_model
 from .interfaces import SupportsLoRA, SupportsPP
 from .utils import (
     AutoWeightsLoader,
-    make_layers,
     maybe_prefix,
     PPMissingLayer,
 )
